@@ -54,6 +54,8 @@ then
   exit
 fi
 
+printf "Email: $newAccEmail\n"
+
 printf "Create New Account\n"
 ReqID=$(aws organizations create-account --email $newAccEmail --account-name "$newAccName" --role-name $roleName \
 --query 'CreateAccountStatus.[Id]' \
@@ -149,7 +151,7 @@ do
     exit 1
   fi
 done
-printf "\Role Created\n"
+printf "Role Created\n"
 
 printf "Create Configure Rule\n"
 configRole=arn:aws:iam::$accID:role/service-role/config-rule-role
@@ -157,15 +159,15 @@ configRole=arn:aws:iam::$accID:role/service-role/config-rule-role
 aws configservice put-configuration-recorder --configuration-recorder name=default,roleARN=$configRole --recording-group allSupported=true,includeGlobalResourceTypes=true --profile $newProfile > /dev/null 2>&1
 aws configservice put-config-rule --config-rule file://CF-ConfigRules.json --profile $newProfile > /dev/null 2>&1
 
-if [ "$destinationOUname" != "" ]
-then
-  printf "Moving New Account to OU\n"
-  rootOU=$(aws organizations list-roots --query 'Roots[0].[Id]' --output text)
-  destOU=$(aws organizations list-organizational-units-for-parent --parent-id $rootOU --query 'OrganizationalUnits[?Name==`'$destinationOUname'`].[Id]' --output text)
+#if [ "$destinationOUname" != "" ]
+#then
+#  printf "Moving New Account to OU\n"
+#  rootOU=$(aws organizations list-roots --query 'Roots[0].[Id]' --output text)
+#  destOU=$(aws organizations list-organizational-units-for-parent --parent-id $rootOU --query 'OrganizationalUnits[?Name==`'$destinationOUname'`].[Id]' --output text)
 
-  aws organizations move-account --account-id $accID --source-parent-id $rootOU --destination-parent-id $destOU > /dev/null 2>&1
-  if [ $? -ne 0 ]
-  then
-    printf "Moving Account Failed\n"
-  fi
-fi
+#  aws organizations move-account --account-id $accID --source-parent-id $rootOU --destination-parent-id $destOU > /dev/null 2>&1
+#  if [ $? -ne 0 ]
+#  then
+#    printf "Moving Account Failed\n"
+#  fi
+#fi
